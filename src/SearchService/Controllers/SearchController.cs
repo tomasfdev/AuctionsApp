@@ -16,8 +16,10 @@ namespace SearchService.Controllers
 
             if (!string.IsNullOrEmpty(searchParams.SearchTerm))
             {
-                query.Match(Search.Full, searchParams.SearchTerm).SortByTextScore(); //find something matching "searchTerm"
+                query.Match(Search.Full, searchParams.SearchTerm).SortByTextScore(); //find something matching "searchParams.SearchTerm"
             }
+
+            //Search Filters
 
             query = searchParams.OrderBy switch //Ordering order by
             {
@@ -35,12 +37,12 @@ namespace SearchService.Controllers
 
             if (!string.IsNullOrEmpty(searchParams.Seller))
             {
-                query.Match(i => i.Seller == searchParams.Seller);
+                query.Match(i => i.Seller == searchParams.Seller);  //Search by Seller
             }
 
             if (!string.IsNullOrEmpty(searchParams.Winner))
             {
-                query.Match(i => i.Winner == searchParams.Winner);
+                query.Match(i => i.Winner == searchParams.Winner);  //Search by Winner
             }
 
             query.PageNumber(searchParams.PageNumber);  //pagination params

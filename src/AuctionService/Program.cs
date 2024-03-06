@@ -1,3 +1,4 @@
+using AuctionService.Consumers;
 using AuctionService.Data;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,18 @@ builder.Services.AddDbContext<AuctionDbContext>(opt =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddMassTransit(x =>    //MassTransit configuration
 {
+    x.AddEntityFrameworkOutbox<AuctionDbContext>(opt => //Outbox service config
+    {
+        opt.QueryDelay = TimeSpan.FromSeconds(10);  //If EventBus/RabbitMQ is down, every 10secs it will check the outbox for any messages to deliver and resend them
+
+        opt.UsePostgres();
+        opt.UseBusOutbox();
+    });
+
+    x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();   //where MassTransit can find the consumers
+
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false));   //set the name of the exchange in RabbitMQ
+
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.ConfigureEndpoints(context);    //Configure the endpoints for all defined consumer, saga, and activity types using an optional endpoint name formatter.

@@ -3,6 +3,8 @@ using AuctionService.DTOs;
 using AuctionService.Entities;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Contracts;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,21 +16,23 @@ namespace AuctionService.Controllers
     {
         private readonly AuctionDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public AuctionsController(AuctionDbContext context, IMapper mapper)
+        public AuctionsController(AuctionDbContext context, IMapper mapper, IPublishEndpoint publishEndpoint)
         {
             _context = context;
             _mapper = mapper;
+            _publishEndpoint = publishEndpoint;
         }
 
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<AuctionDto>>> GetAuctions(string date)
         {
-            var query = _context.Auctions.OrderBy(a => a.Item.Make).AsQueryable();  //"AsQueryable" returns IQueryable to be possible to make further queries
+            var query = _context.Auctions.OrderBy(a => a.Item.Make).AsQueryable();  //"AsQueryable()" returns IQueryable to be possible to make further queries
 
             if (!string.IsNullOrEmpty(date))
             {
-                query = query.Where(a => a.UpdatedAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0);    //return auctions that are greater than "date" param
+                query = query.Where(a => a.UpdatedAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0);    //return auctions that are greater/later than "date" param
             }
 
             return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
@@ -56,11 +60,15 @@ namespace AuctionService.Controllers
 
             _context.Auctions.Add(auction); //entity framework tracking this in memory, nothing's been saved to the DB
 
+            var newAuction = _mapper.Map<AuctionDto>(auction);  //map Auction to AuctionDto
+
+            await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuction));    //publishes a message as AuctionCreated to RabbitMQ/EventBus for SearchService subscribes/consumes it
+
             var result = await _context.SaveChangesAsync() > 0; //save to DB
 
             if (!result) return BadRequest("Error creating auction");
 
-            return CreatedAtAction(nameof(GetAuction), new { auction.Id }, _mapper.Map<AuctionDto>(auction));   //return an http statusCode201 created Response, where(endpoint) the obj was created, and the obj "auction" created
+            return CreatedAtAction(nameof(GetAuction), new { auction.Id }, newAuction);   //return an http statusCode201 created Response, where(endpoint) the obj was created, and the obj "auction" created
             //nameof: name of the action/endpoint where the obj("auction") can be found, where can get the obj created. New{auction.Id}: is the parameter that the action needs(Guid id)
         }
 
@@ -83,6 +91,8 @@ namespace AuctionService.Controllers
             auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
             auction.Item.ImageUrl = updateAuctionDto.ImageUrl ?? auction.Item.ImageUrl;
 
+            await _publishEndpoint.Publish(_mapper.Map<AuctionUpdated>(auction));   //publishes a message as AuctionUpdated to RabbitMQ/EventBus for SearchService subscribes/consumes it
+
             var result = await _context.SaveChangesAsync() > 0;
 
             if (!result) return BadRequest("Error updating auction");
@@ -100,6 +110,8 @@ namespace AuctionService.Controllers
             //TODO: check seller == username
 
             _context.Auctions.Remove(auction);
+
+            await _publishEndpoint.Publish<AuctionDeleted>(new { Id = auction.Id.ToString() });
 
             var result = await _context.SaveChangesAsync() > 0;
 

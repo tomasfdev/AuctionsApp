@@ -41,7 +41,7 @@ namespace SearchService.Data
 
             Console.WriteLine(items.Count + " returned from the auction service");
 
-            if (items.Count > 0) await DB.SaveAsync(items); //if get auctions/items save in MongoDb
+            if (items.Count > 0) await DB.SaveAsync(items); //if get items/auctions save in MongoDb
         }
     }
 }
