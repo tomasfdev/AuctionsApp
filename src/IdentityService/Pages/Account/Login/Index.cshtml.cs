@@ -47,7 +47,7 @@ public class Index : PageModel
         _events = events;
     }
 
-    public async Task<IActionResult> OnGet(string? returnUrl)
+    public async Task<IActionResult> OnGet(string returnUrl)
     {
         await BuildModelAsync(returnUrl);
             
@@ -147,7 +147,7 @@ public class Index : PageModel
         return Page();
     }
 
-    private async Task BuildModelAsync(string? returnUrl)
+    private async Task BuildModelAsync(string returnUrl)
     {
         Input = new InputModel
         {
