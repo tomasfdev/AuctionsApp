@@ -29,6 +29,12 @@ builder.Services.AddMassTransit(x =>    //MassTransit configuration
 
     x.UsingRabbitMq((context, cfg) =>
     {
+        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", host =>
+        {
+            host.Username(builder.Configuration.GetValue("RabbitMq:Username", "guest"));
+            host.Password(builder.Configuration.GetValue("RabbitMq:Password", "guest"));
+        });
+
         cfg.ConfigureEndpoints(context);    //Configure the endpoints for all defined consumer, saga, and activity types using an optional endpoint name formatter.
     });
 });

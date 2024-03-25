@@ -20,6 +20,12 @@ builder.Services.AddMassTransit(x =>    //MassTransit configuration
 
 	x.UsingRabbitMq((context, cfg) =>
 	{
+		cfg.Host(builder.Configuration["RabbitMq:Host"], "/", host =>
+        {
+            host.Username(builder.Configuration.GetValue("RabbitMq:Username", "guest"));
+            host.Password(builder.Configuration.GetValue("RabbitMq:Password", "guest"));
+        });
+
 		cfg.ReceiveEndpoint("search-auction-created", e =>  //retry policies, if it fails to save an message from EventBus/RabbitMQ into MongoDB retries the process
         {
 			e.UseMessageRetry(r => r.Interval(5, 5));   //retries 5 times with 5sec interval
