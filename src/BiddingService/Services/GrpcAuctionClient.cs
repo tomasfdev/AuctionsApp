@@ -25,7 +25,7 @@ namespace BiddingService.Services
 
             try
             {
-                var reply = client.GetAuction(request);
+                var reply = client.GetAuction(request); //gRPC auction response
                 var auction = new Auction
                 {
                     ID = reply.Auction.Id,
