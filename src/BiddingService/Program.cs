@@ -1,35 +1,24 @@
-using AuctionService.Consumers;
-using AuctionService.Data;
-using AuctionService.Services;
+using BiddingService.Consumers;
+using BiddingService.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
+using MongoDB.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddDbContext<AuctionDbContext>(opt =>
-{
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
 
+builder.Services.AddControllers();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.AddGrpc(); //Grpc service
+builder.Services.AddHostedService<CheckAuctionFinished>();
+builder.Services.AddScoped<GrpcAuctionClient>();
 
 builder.Services.AddMassTransit(x =>    //MassTransit configuration
 {
-    x.AddEntityFrameworkOutbox<AuctionDbContext>(opt => //Outbox service config
-    {
-        opt.QueryDelay = TimeSpan.FromSeconds(10);  //If EventBus/RabbitMQ is down, every 10secs it will check the outbox for any messages to deliver and resend them
+    x.AddConsumersFromNamespaceContaining<AuctionCreatedConsumer>();    //add consumer
 
-        opt.UsePostgres();
-        opt.UseBusOutbox();
-    });
-
-    x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();   //where MassTransit can find the consumers
-
-    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false));   //set the name of the exchange in RabbitMQ
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("bids", false));   //set the name of the exchange in RabbitMQ
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -55,21 +44,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)  //Au
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-//app.UseHttpsRedirection();
 
-app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGrpcService<GrpcAuctionService>();
 
-try
-{
-    DbInitializer.InitDb(app);
-}
-catch (Exception e)
-{
-    Console.WriteLine(e);
-}
+await DB.InitAsync("BidDb", MongoClientSettings.FromConnectionString(builder.Configuration.GetConnectionString("BidDbConnection")));
 
 app.Run();

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "AuctionService";
+
+service GrpcAuction {
+    rpc GetAuction (GetAuctionRequest) returns (GrpcAuctionResponse); //specify the RPC, the remote procedure call used called "GetAuction", that cames from Client Side, the request made
+}
+
+message GetAuctionRequest {
+    string id = 1;  //get auction
+}
+
+message GrpcAuctionModel {
+    string id = 1;
+    string seller = 2;
+    string auctionEnd = 3;
+    int32 reservePrice = 4;
+}
+
+message GrpcAuctionResponse {
+    GrpcAuctionModel auction = 1;
+}
