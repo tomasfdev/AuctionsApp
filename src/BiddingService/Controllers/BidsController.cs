@@ -39,7 +39,9 @@ namespace BiddingService.Controllers
             }
 
             if (auction.Seller == User.Identity.Name)
+            {
                 return BadRequest("You cannot bid on your own auction");
+            }
 
             var bid = new Bid   //create bid
             {

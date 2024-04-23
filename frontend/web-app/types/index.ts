@@ -23,6 +23,14 @@ export type Auction = {
   id: string;
 };
 
+export type AuctionFinished = {
+  itemSold: boolean;
+  auctionId: string;
+  winner?: string;
+  seller: string;
+  amount?: number;
+};
+
 export type Bid = {
   id: string;
   auctionId: string;

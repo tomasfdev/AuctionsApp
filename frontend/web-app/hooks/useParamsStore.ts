@@ -31,25 +31,23 @@ const initialState: State = {
   winner: undefined,
 };
 
-export const useParamsStore = createWithEqualityFn<State & Actions>(
-  (set) => ({
-    ...initialState,
+export const useParamsStore = createWithEqualityFn<State & Actions>((set) => ({
+  ...initialState,
 
-    setParams: (newParams: Partial<State>) => {
-      set((state) => {
-        if (newParams.pageNumber) {
-          return { ...state, pageNumber: newParams.pageNumber };
-        } else {
-          return { ...state, ...newParams, pageNumber: 1 };
-        }
-      });
-    },
+  setParams: (newParams: Partial<State>) => {
+    set((state) => {
+      if (newParams.pageNumber) {
+        return { ...state, pageNumber: newParams.pageNumber };
+      } else {
+        return { ...state, ...newParams, pageNumber: 1 };
+      }
+    });
+  },
 
-    resetState: () => set(initialState),
+  resetState: () => set(initialState),
 
-    setSearchValue: (value: string) => {
-      set({ searchValue: value });
-    },
-  }),
-  shallow
-);
+  setSearchValue: (value: string) => {
+    set({ searchValue: value });
+  },
+  shallow,
+}));

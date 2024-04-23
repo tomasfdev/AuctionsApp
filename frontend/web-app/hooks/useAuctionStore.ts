@@ -1,5 +1,7 @@
 import { Auction, PagedResult } from "@/types";
 import { create } from "zustand";
+import { shallow } from "zustand/shallow";
+import { createWithEqualityFn } from "zustand/traditional";
 
 type State = {
   auctions: Auction[];
@@ -19,7 +21,7 @@ const initialState: State = {
 };
 
 //AuctionStore hook
-export const useAuctionStore = create<State & Actions>((set) => ({
+export const useAuctionStore = createWithEqualityFn<State & Actions>((set) => ({
   ...initialState, //store config
 
   setData: (data: PagedResult<Auction>) => {
@@ -39,4 +41,5 @@ export const useAuctionStore = create<State & Actions>((set) => ({
       ),
     }));
   },
+  shallow,
 }));
