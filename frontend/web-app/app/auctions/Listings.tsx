@@ -2,17 +2,17 @@
 
 import React, { useEffect, useState } from "react";
 import AuctionCard from "./AuctionCard";
-import { Auction, PagedResult } from "@/types";
 import AppPagination from "../components/AppPagination";
-import { getAuctions } from "../actions/auctionActions";
+import { getData } from "../actions/auctionActions";
 import Filters from "./Filters";
 import { useParamsStore } from "@/hooks/useParamsStore";
 import qs from "query-string";
 import { shallow } from "zustand/shallow";
 import EmptyFilter from "../components/EmptyFilter";
+import { useAuctionStore } from "@/hooks/useAuctionStore";
 
 export default function Listings() {
-  const [auctions, setAuctions] = useState<PagedResult<Auction>>();
+  const [loading, setLoading] = useState(true);
   const params = useParamsStore(
     (state) => ({
       pageNumber: state.pageNumber,
@@ -25,6 +25,16 @@ export default function Listings() {
     }),
     shallow
   );
+  const data = useAuctionStore(
+    (state) => ({
+      auctions: state.auctions,
+      totalCount: state.totalCount,
+      pageCount: state.pageCount,
+    }),
+    shallow
+  );
+  const setData = useAuctionStore((state) => state.setData);
+
   const setParams = useParamsStore((state) => state.setParams);
   const url = qs.stringifyUrl({ url: "", query: params });
 
@@ -33,29 +43,30 @@ export default function Listings() {
   }
 
   useEffect(() => {
-    getAuctions(url).then((auctions) => {
-      setAuctions(auctions);
+    getData(url).then((data) => {
+      setData(data);
+      setLoading(false);
     });
   }, [url]); //useEffect() use "url" as a dependency, so whenever url changes, useEffect() gets called again and the component Listings() get re rendered with updated results/data
 
-  if (!auctions) return <h3>Loading...</h3>;
+  if (loading) return <h3>Loading...</h3>;
 
   return (
     <>
       <Filters />
-      {auctions.totalCount === 0 ? (
+      {data.totalCount === 0 ? (
         <EmptyFilter showReset />
       ) : (
         <>
           <div className="grid grid-cols-4 gap-6">
-            {auctions.results.map((auction) => (
+            {data.auctions.map((auction) => (
               <AuctionCard auction={auction} key={auction.id} />
             ))}
           </div>
           <div className="flex justify-center mt-4">
             <AppPagination
               currentPage={params.pageNumber}
-              pageCount={auctions.pageCount}
+              pageCount={data.pageCount}
               pageChanged={setPageNumber}
             />
           </div>
