@@ -26,7 +26,7 @@ export default function SignalRProvider({ children, user }: Props) {
   //to make a connection to signalR Hub when the user loads the app
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-      .withUrl("http://localhost:6001/notifications")
+      .withUrl(process.env.NEXT_PUBLIC_NOTIFY_URL!)
       .withAutomaticReconnect()
       .build();
 
