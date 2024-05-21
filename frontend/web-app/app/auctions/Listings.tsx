@@ -47,7 +47,7 @@ export default function Listings() {
       setData(data);
       setLoading(false);
     });
-  }, [url]); //useEffect() use "url" as a dependency, so whenever url changes, useEffect() gets called again and the component Listings() get re rendered with updated results/data
+  }, [url, setData]); //useEffect() use "url" as a dependency, so whenever url changes, useEffect() gets called again and the component Listings() get re rendered with updated results/data
 
   if (loading) return <h3>Loading...</h3>;
 

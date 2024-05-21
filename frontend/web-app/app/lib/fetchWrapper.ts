@@ -1,6 +1,6 @@
 import { getTokenWorkaround } from "@/app/actions/authActions";
 
-const gatewayUrl = "http://localhost:6001/";
+const gatewayUrl = process.env.API_URL;
 
 async function get(url: string) {
   const requestOptions = { method: "GET", headers: await getHeaders() };
