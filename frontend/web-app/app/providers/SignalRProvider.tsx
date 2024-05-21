@@ -22,16 +22,21 @@ export default function SignalRProvider({ children, user }: Props) {
   const [connection, setConnection] = useState<HubConnection | null>(null); //store connection inside state
   const setCurrentPrice = useAuctionStore((state) => state.setCurrentPrice);
   const addBid = useBidStore((state) => state.addBid);
+  //docker image with NEXT_PUBLIC_env variable runtime work around
+  const apiUrl =
+    process.env.NODE_ENV === "production"
+      ? "https://api.auctionsapp.com/notifications"
+      : process.env.NEXT_PUBLIC_NOTIFY_URL;
 
   //to make a connection to signalR Hub when the user loads the app
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-      .withUrl(process.env.NEXT_PUBLIC_NOTIFY_URL!)
+      .withUrl(apiUrl!)
       .withAutomaticReconnect()
       .build();
 
     setConnection(newConnection); //store the connection inside local state
-  }, []);
+  }, [apiUrl]);
 
   useEffect(() => {
     if (connection) {
@@ -86,7 +91,7 @@ export default function SignalRProvider({ children, user }: Props) {
     return () => {
       connection?.stop(); //stop the connection to the SignalR Server when this component is disposed of
     };
-  }, [connection, setCurrentPrice]); //useEffect() dependencies
+  }, [connection, setCurrentPrice, addBid, user?.username]); //useEffect() dependencies
 
   return children;
 }
