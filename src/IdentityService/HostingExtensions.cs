@@ -1,4 +1,5 @@
 using Duende.IdentityServer;
+using Duende.IdentityServer.Services;
 using IdentityService.Data;
 using IdentityService.Models;
 using IdentityService.Services;
